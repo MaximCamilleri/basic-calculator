@@ -7,7 +7,7 @@
 
 
 Calculator::Calculator(){
-    this->ops_valid = {'^', '*', '/', '+', '-'};
+    this->ops_valid = {'(', '^', '*', '/', '+', '-'};
     this->ops_priority = {{'^'}, {'*', '/'}, {'+', '-'}};
     this->ops_to_function = {
         {'^', &Calculator::power},
@@ -18,16 +18,19 @@ Calculator::Calculator(){
     };
 };
 
-float Calculator::run(std::string expression){ 
-    
-}
-
-float Calculator::run_idmas(std::string expression){
+float Calculator::run(std::string expression){
     std::stack<float> num_stack;
     std::stack<char> ops_stack;
     this->build_stacks(num_stack, ops_stack, expression);
 
-    
+    run_bidmas(num_stack, ops_stack);
+    if(num_stack.size() > 1){
+        throw std::invalid_argument("Input Expression is not Valid");
+    }
+    return num_stack.top();
+}
+
+void Calculator::run_bidmas(std::stack<float>& num_stack, std::stack<char>& ops_stack){
     for(std::vector<char>& ops_target : this->ops_priority){
         // Move down the stack looking for calculations including the target operator 
         std::stack<float> num_temp;
@@ -35,9 +38,13 @@ float Calculator::run_idmas(std::string expression){
         num_temp.push(num_stack.top());
         num_stack.pop();
 
-        while(ops_stack.size() > 0){
+        while(ops_stack.size() > 0){ 
             char op = ops_stack.top();
             ops_stack.pop();
+
+            if(op == '('){
+                break;
+            }
             
             if(std::find(ops_target.begin(), ops_target.end(), op) != ops_target.end()){
                 float num2 = num_temp.top();
@@ -62,27 +69,34 @@ float Calculator::run_idmas(std::string expression){
             ops_stack.push(ops_temp.top());
             ops_temp.pop();
         }
-    }   
-
-    if(num_stack.size() < 0){
-        throw std::invalid_argument("Input Expression is not Valid");
     }
-    return num_stack.top();
 }
 
 void Calculator::build_stacks(std::stack<float>& num_stack, std::stack<char>& ops_stack, std::string expression){
     std::string working_number = {};
     for(char& c : expression){
+        // Numbers
         if(c >= '0' && c <= '9'){
             working_number.push_back(c);
+            continue;
         } 
         else if(working_number.size() > 0){ 
             num_stack.push(std::stof(working_number));
             working_number = "";
         }
-
-        if(std::find(this->ops_valid.begin(), this->ops_valid.end(), c) != this->ops_valid.end()){
+        
+        // Operators
+        if(c == ')'){
+            this->run_bidmas(num_stack, ops_stack);
+        } 
+        else if (c == ' '){
+            continue;
+        } 
+        else if(std::find(this->ops_valid.begin(), this->ops_valid.end(), c) != this->ops_valid.end()){
             ops_stack.push(c);
+        } 
+        else {
+            throw std::invalid_argument(c + " is not a valid character");
         }
     }
     

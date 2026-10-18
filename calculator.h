@@ -6,7 +6,7 @@
 class Calculator{
     private: 
         void build_stacks(std::stack<float>& num_stack, std::stack<char>& ops_stack, std::string expression);
-        float run_idmas(std::string expression);
+        void run_bidmas(std::stack<float>& num_stack, std::stack<char>& ops_stack);
 
         float add(float num1, float num2);
         float subtract(float num1, float num2);
